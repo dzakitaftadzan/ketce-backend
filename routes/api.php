@@ -18,11 +18,17 @@ Route::post('/login', [AuthController::class, 'login']);
 
 // --- 2. PROTECTED ROUTES ---
 // Jalur yang hanya bisa diakses jika user sudah login (Wajib bawa token)
+// --- 2. PROTECTED ROUTES ---
 Route::middleware('auth:sanctum')->group(function () {
     
     // Fitur Keranjang
     Route::get('/cart', [CartController::class, 'index']);
     Route::post('/cart', [CartController::class, 'store']);
+    
+    // Fitur Orders
     Route::post('/orders', [OrderController::class, 'store']);
-    // Nanti di sini kita akan tambahkan route untuk Orders / Checkout
+    
+    // Rute Baru: Lihat & Ganti Status Order
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
 });
