@@ -8,13 +8,24 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RoleMiddleware
 {
+    /**
+     * Handle an incoming request.
+     */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        // Cek apakah user sudah login dan role-nya ada di daftar yang diizinkan
-        if (!$request->user() || !in_array($request->user()->role, $roles)) {
+        // 1. Pastikan user sudah login melalui Sanctum
+        if (!$request->user()) {
             return response()->json([
-                'success' => false, 
-                'message' => 'Akses ditolak: Kamu tidak memiliki izin untuk fitur ini.'
+                'success' => false,
+                'message' => 'Unauthorized. Silakan login terlebih dahulu.',
+            ], 401);
+        }
+
+        // 2. Cek apakah role user ada di dalam daftar role yang diizinkan
+        if (!in_array($request->user()->role, $roles)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden. Anda tidak memiliki akses ke halaman ini.',
             ], 403);
         }
 
