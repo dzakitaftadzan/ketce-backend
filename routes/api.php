@@ -6,19 +6,20 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 
-
 // --- 1. PUBLIC ROUTES ---
-// Jalur yang bisa diakses oleh siapa saja (tidak butuh token)
+// Area bebas akses (Tanpa Token)
+Route::post('/products', [ProductController::class, 'store']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
+
+// Rute upload gambar di sini (Tidak perlu login)
+Route::post('/products/{id}/images', [ProductController::class, 'uploadImages']);
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-
 // --- 2. PROTECTED ROUTES ---
-// Jalur yang hanya bisa diakses jika user sudah login (Wajib bawa token)
-// --- 2. PROTECTED ROUTES ---
+// Area yang mewajibkan Token (Sesuai struktur sistemmu)
 Route::middleware('auth:sanctum')->group(function () {
     
     // Fitur Keranjang
@@ -27,8 +28,6 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Fitur Orders
     Route::post('/orders', [OrderController::class, 'store']);
-    
-    // Rute Baru: Lihat & Ganti Status Order
     Route::get('/orders/{id}', [OrderController::class, 'show']);
     Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
 });

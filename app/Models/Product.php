@@ -3,29 +3,30 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class Product extends Model
 {
+    // 1. Pastikan semua kolom ini diizinkan untuk diisi (termasuk category, base_price, dan image)
     protected $fillable = [
-        'name', 'slug', 'description', 'category', 'base_price', 'image', 'is_active'
+        'name', 
+        'slug', 
+        'description', 
+        'category', 
+        'base_price', 
+        'image', 
+        'is_active'
     ];
 
-    protected static function booted()
-    {
-        static::creating(function ($product) {
-            $product->slug = Str::slug($product->name);
-        });
-    }
+    // 2. 💡 INI YANG PALING PENTING: Ubah teks biasa menjadi Array/JSON
+    protected $casts = [
+        'image' => 'array',
+        'is_active' => 'boolean',
+    ];
 
     public function variants()
     {
         return $this->hasMany(ProductVariant::class);
     }
 
-    // Accessor untuk format Rupiah
-    public function getPriceFormattedAttribute(): string
-    {
-        return 'Rp ' . number_format($this->base_price, 0, ',', '.');
-    }
+    // Jika kamu punya relasi lain, biarkan saja di bawah ini...
 }

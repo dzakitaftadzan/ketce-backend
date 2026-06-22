@@ -11,8 +11,7 @@ return [
     | by the framework. The "local" disk, as well as a variety of cloud
     | based disks are available to your application for file storage.
     |
-    */
-
+    |/
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
@@ -56,6 +55,20 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+            'report' => false,
+        ],
+
+        // 💡 DI SINI PERUBAHANNYA (DISK SUPABASE BARU KAMU)
+        'supabase' => [
+            'driver' => 's3',
+            'key' => env('SUPABASE_ANON_KEY'),
+            'secret' => env('SUPABASE_ANON_KEY'), 
+            'region' => 'us-east-1', 
+            'bucket' => 'products',  
+            'url' => env('SUPABASE_URL') . '/storage/v1/object/public/products',
+            'endpoint' => env('SUPABASE_URL') . '/storage/v1/s3',
+            'use_path_style_endpoint' => true,
             'throw' => false,
             'report' => false,
         ],
