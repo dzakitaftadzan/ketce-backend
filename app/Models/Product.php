@@ -3,30 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Product extends Model
+class ProductVariant extends Model
 {
-    // 1. Pastikan semua kolom ini diizinkan untuk diisi (termasuk category, base_price, dan image)
-    protected $fillable = [
-        'name', 
-        'slug', 
-        'description', 
-        'category', 
-        'base_price', 
-        'image', 
-        'is_active'
-    ];
+    protected $fillable = ['product_id', 'name', 'sku', 'stock', 'price_modifier'];
 
-    // 2. 💡 INI YANG PALING PENTING: Ubah teks biasa menjadi Array/JSON
-    protected $casts = [
-        'image' => 'array',
-        'is_active' => 'boolean',
-    ];
-
-    public function variants()
+    public function product(): BelongsTo
     {
-        return $this->hasMany(ProductVariant::class);
+        return $this->belongsTo(Product::class);
     }
-
-    // Jika kamu punya relasi lain, biarkan saja di bawah ini...
 }

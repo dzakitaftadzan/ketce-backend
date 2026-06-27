@@ -3,36 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str; // Tambahkan ini agar bisa generate string acak
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
 {
-    protected $fillable = [
-        'user_id', 'address_id', 'order_code', 'subtotal', 'shipping_cost', 'total', 'payment_status', 'order_status', 'payment_proof', 'notes'
-    ];
+    protected $fillable = ['user_id', 'total_price', 'status', 'shipping_address'];
 
-    // Ini adalah "kunci" agar order_code terisi otomatis saat create
-    protected static function booted()
+    public function user(): BelongsTo
     {
-        static::creating(function ($order) {
-            $order->order_code = 'ORD-' . strtoupper(Str::random(8));
-        });
+        return $this->belongsTo(User::class);
     }
 
-    public function user() { return $this->belongsTo(User::class); }
-    public function address() { return $this->belongsTo(Address::class); }
-    public function items() { return $this->hasMany(OrderItem::class); }
-    public function delivery() { return $this->hasOne(Delivery::class); }
-
-    // Scope untuk filter status pesanan
-    public function scopeByStatus($query, $status)
+    public function items(): HasMany
     {
-        return $query->where('order_status', $status);
+        return $this->hasMany(OrderItem::class);
     }
 
-    // Cek apakah pesanan masih bisa dibatalkan customer
-    public function canBeCancelledByCustomer(): bool
+    public function delivery(): HasOne
     {
-        return in_array($this->order_status, ['pending', 'confirmed']);
+        return $this->hasOne(Delivery::class);
     }
 }
