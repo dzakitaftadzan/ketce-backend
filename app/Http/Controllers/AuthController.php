@@ -2,52 +2,42 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
+use App\Services\AuthService;
 
 class AuthController extends Controller
 {
-    // Fungsi Login yang sudah ada
+    protected $authService;
+
+    public function __construct(AuthService $authService)
+    {
+        $this->authService = $authService;
+    }
+
     public function login(Request $request)
     {
-        $request->validate([
-            'email' => 'required|email',
+        $data = $request->validate([
+            'email' => 'required|string', // Bisa berisi email atau nomor HP
             'password' => 'required',
             'device_name' => 'required',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $result = $this->authService->login($data);
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['Data login tidak cocok.'],
-            ]);
-        }
-
-        return response()->json([
-            'token' => $user->createToken($request->device_name)->plainTextToken
-        ]);
+        return response()->json($result);
     }
 
-    // TAMBAHKAN FUNGSI INI DI BAWAH FUNGSI LOGIN
     public function register(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'min:8', 'confirmed', 'regex:/[0-9]/'],
+            'role' => 'sometimes|string|in:admin,customer,kurir',
+            'phone' => 'nullable|string',
         ]);
 
-        $user = User::create([
-    'name' => $request->name,
-    'email' => $request->email,
-    'password' => Hash::make($request->password),
-
-    // sementara default customer
-    'role' => 'customer',
-]);
+        $user = $this->authService->register($data);
 
         return response()->json([
             'message' => 'Registrasi berhasil',
@@ -55,9 +45,21 @@ class AuthController extends Controller
         ], 201);
     }
 
+    public function googleLogin(Request $request)
+    {
+        $data = $request->validate([
+            'credential' => 'required',
+            'device_name' => 'required',
+        ]);
+
+        $result = $this->authService->googleLogin($data);
+
+        return response()->json($result);
+    }
+
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        $this->authService->logout($request->user());
         return response()->json(['message' => 'Logout berhasil']);
     }
 }

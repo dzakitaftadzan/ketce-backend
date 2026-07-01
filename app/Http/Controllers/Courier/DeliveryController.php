@@ -13,7 +13,7 @@ class DeliveryController extends Controller
     {
         // Menampilkan daftar kiriman milik kurir yang sedang login
         $deliveries = Delivery::where('courier_id', $request->user()->id)
-            ->with('order')
+            ->with(['order.address', 'order.user', 'order.orderItems.product'])
             ->get();
             
         return response()->json(['data' => $deliveries]);
@@ -22,9 +22,12 @@ class DeliveryController extends Controller
     public function pickup($id)
     {
         $delivery = Delivery::where('id', $id)->where('courier_id', auth()->id())->firstOrFail();
-        $delivery->update(['status' => 'delivering']);
+        $delivery->update([
+            'status' => 'delivering',
+            'shipped_at' => now(),
+        ]);
         
-        Order::where('id', $delivery->order_id)->update(['order_status' => 'on-delivery']);
+        Order::where('id', $delivery->order_id)->update(['order_status' => 'shipping']);
         
         return response()->json(['message' => 'Pesanan telah diambil oleh kurir']);
     }
@@ -32,7 +35,10 @@ class DeliveryController extends Controller
     public function done($id)
     {
         $delivery = Delivery::where('id', $id)->where('courier_id', auth()->id())->firstOrFail();
-        $delivery->update(['status' => 'delivered']);
+        $delivery->update([
+            'status' => 'delivered',
+            'delivered_at' => now(),
+        ]);
         
         Order::where('id', $delivery->order_id)->update(['order_status' => 'completed']);
         
@@ -42,7 +48,10 @@ class DeliveryController extends Controller
     public function failed($id)
     {
         $delivery = Delivery::where('id', $id)->where('courier_id', auth()->id())->firstOrFail();
-        $delivery->update(['status' => 'failed']);
+        $delivery->update([
+            'status' => 'failed',
+            'failed_at' => now(),
+        ]);
         
         Order::where('id', $delivery->order_id)->update(['order_status' => 'failed']);
         

@@ -40,7 +40,7 @@ class CourierController extends Controller
         $validated = $request->validate([
             'name' => 'required|min:3',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
+            'password' => ['required', 'string', 'min:8', 'regex:/[0-9]/'],
             'phone' => 'required',
             'vehicle_type' => 'required|in:E-BIKE,LIGHT-VAN',
         ]);
@@ -48,7 +48,7 @@ class CourierController extends Controller
         $courier = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'password' => $validated['password'], // Model otomatis menggunakan 'hashed' cast
             'role' => 'kurir',
             'phone' => $validated['phone'],
             'vehicle_type' => $validated['vehicle_type'],

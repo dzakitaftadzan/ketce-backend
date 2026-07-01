@@ -18,6 +18,9 @@ class Order extends Model
         'payment_proof',
         'payment_status',
         'order_status',
+        'payment_method',
+        'payment_token',
+        'paid_at',
     ];
 
     /**
@@ -42,5 +45,13 @@ class Order extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Relasi ke Delivery
+     */
+    public function delivery(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Delivery::class);
     }
 }

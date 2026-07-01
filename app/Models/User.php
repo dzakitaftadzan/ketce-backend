@@ -19,6 +19,7 @@ class User extends Authenticatable
         'vehicle_type',
         'is_active',
         'phone',
+        'google_id',
     ];
 
     protected $hidden = [
@@ -31,6 +32,16 @@ class User extends Authenticatable
         'role' => 'customer', // Default role adalah customer
         'is_active' => true,  // Default user aktif
     ];
+
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
 
     protected function casts(): array
     {
