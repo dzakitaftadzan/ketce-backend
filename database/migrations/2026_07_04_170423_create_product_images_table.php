@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+{
+    Schema::create('product_images', function (Blueprint $table) {
+        $table->id();
+
+        // Relasi ke tabel products
+        $table->foreignId('product_id')
+              ->constrained()
+              ->cascadeOnDelete();
+
+        // Path gambar
+        $table->string('image');
+
+        // Urutan gambar (opsional)
+        $table->unsignedTinyInteger('sort_order')->default(1);
+
+        $table->timestamps();
+    });
+}
+    
+    public function down(): void
+{
+    Schema::dropIfExists('product_images');
+}
+};
