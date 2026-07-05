@@ -5,16 +5,23 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\Customer\TrackingController;
+
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\CourierController;
+use App\Http\Controllers\Admin\ProductController;
+
 use App\Http\Controllers\Courier\DeliveryController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
-    // --- Customer ---
+
+    // ==========================
+    // CUSTOMER
+    // ==========================
     Route::middleware('checkrole:customer,admin')->group(function () {
+
         Route::prefix('cart')->group(function () {
             Route::get('/', [CartController::class, 'index']);
             Route::post('/', [CartController::class, 'store']);
@@ -31,21 +38,32 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
 
-    // --- Admin ---
+    // ==========================
+    // ADMIN
+    // ==========================
     Route::middleware('checkrole:admin')->prefix('admin')->group(function () {
+
+        // Product CRUD
+        Route::apiResource('products', ProductController::class);
+
+        // Order
         Route::get('/orders', [AdminOrderController::class, 'index']);
         Route::post('/orders/{id}/confirm', [AdminOrderController::class, 'confirmPayment']);
         Route::patch('/orders/{id}/pack', [AdminOrderController::class, 'pack']);
         Route::patch('/orders/{id}/assign', [AdminOrderController::class, 'assignCourier']);
         Route::delete('/orders/{id}', [AdminOrderController::class, 'cancelOrder']);
         Route::get('/stats', [AdminOrderController::class, 'stats']);
-        
+
+        // Courier
         Route::apiResource('couriers', CourierController::class);
         Route::patch('/couriers/{id}/toggle', [CourierController::class, 'toggle']);
     });
 
-    // --- Courier ---
+    // ==========================
+    // COURIER
+    // ==========================
     Route::middleware('checkrole:courier,admin')->prefix('courier')->group(function () {
+
         Route::get('/deliveries', [DeliveryController::class, 'index']);
         Route::post('/deliveries/{id}/pickup', [DeliveryController::class, 'pickup']);
         Route::post('/deliveries/{id}/done', [DeliveryController::class, 'done']);
