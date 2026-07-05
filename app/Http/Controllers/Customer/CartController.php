@@ -13,7 +13,7 @@ class CartController extends Controller
     public function index()
     {
         $cart = Cart::where('user_id', auth()->id())
-            ->with('items')
+            ->with('items.product.images')
             ->first();
 
         if (!$cart) {
@@ -44,32 +44,49 @@ class CartController extends Controller
             'quantity'   => 'required|integer|min:1',
         ]);
 
+        $product = Product::findOrFail($request->product_id);
+
+        if ($request->quantity > $product->stock) {
+            return response()->json([
+                'message' => 'Stok tidak mencukupi'
+            ], 400);
+        }
+
         $cart = Cart::firstOrCreate([
             'user_id' => auth()->id()
         ]);
 
-        $product = Product::findOrFail($request->product_id);
-
         $item = CartItem::where('cart_id', $cart->id)
-                        ->where('product_id', $product->id)
-                        ->first();
+            ->where('product_id', $product->id)
+            ->first();
 
         if ($item) {
-            $item->quantity += $request->quantity;
+
+            $newQty = $item->quantity + $request->quantity;
+
+            if ($newQty > $product->stock) {
+                return response()->json([
+                    'message' => 'Stok tidak mencukupi'
+                ], 400);
+            }
+
+            $item->quantity = $newQty;
             $item->save();
+
         } else {
+
             $item = CartItem::create([
-                'cart_id'      => $cart->id,
-                'product_id'   => $product->id,
+                'cart_id' => $cart->id,
+                'product_id' => $product->id,
                 'product_name' => $product->name,
-                'quantity'     => $request->quantity,
-                'price'        => $product->price,
+                'quantity' => $request->quantity,
+                'price' => $product->price,
             ]);
         }
 
         return response()->json([
             'message' => 'Barang berhasil masuk ke keranjang',
-            'data'    => $item
+            'data' => $item
         ], 201);
     }
 
@@ -95,6 +112,14 @@ class CartController extends Controller
             return response()->json([
                 'message' => 'Item keranjang tidak ditemukan'
             ], 404);
+        }
+
+        $product = Product::findOrFail($item->product_id);
+
+        if ($request->quantity > $product->stock) {
+            return response()->json([
+                'message' => 'Stok tidak mencukupi'
+            ], 400);
         }
 
         $item->quantity = $request->quantity;
