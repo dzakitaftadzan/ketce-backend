@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -101,15 +102,105 @@ class ProductController extends Controller
      * Mengupdate produk.
      */
     public function update(Request $request, Product $product)
-    {
-        //
+{
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'price' => 'required|numeric|min:0',
+        'stock' => 'required|integer|min:0',
+        'description' => 'nullable|string',
+
+        'images' => 'nullable|array|min:1|max:4',
+        'images.*' => 'image|mimes:jpg,jpeg,png,webp|max:2048',
+    ]);
+
+    DB::beginTransaction();
+
+    try {
+
+        $product->update([
+            'name' => $validated['name'],
+            'price' => $validated['price'],
+            'stock' => $validated['stock'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        if ($request->hasFile('images')) {
+
+            foreach ($product->images as $image) {
+
+                if (Storage::disk('public')->exists($image->image)) {
+                    Storage::disk('public')->delete($image->image);
+                }
+
+                $image->delete();
+            }
+
+            foreach ($request->file('images') as $index => $image) {
+
+                $path = $image->store('products', 'public');
+
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'image' => $path,
+                    'sort_order' => $index + 1,
+                ]);
+            }
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk berhasil diperbarui.',
+            'data' => $product->load('images'),
+        ]);
+
+    } catch (\Throwable $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal memperbarui produk.',
+            'error' => $e->getMessage(),
+        ], 500);
     }
+}
 
     /**
      * Menghapus produk.
      */
     public function destroy(Product $product)
-    {
-        //
+{
+    DB::beginTransaction();
+
+    try {
+
+        foreach ($product->images as $image) {
+
+    if (Storage::disk('public')->exists($image->image)) {
+        Storage::disk('public')->delete($image->image);
     }
+}
+
+        $product->delete();
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Produk berhasil dihapus.',
+        ]);
+
+    } catch (\Throwable $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menghapus produk.',
+            'error' => $e->getMessage(),
+        ], 500);
+    }
+}
 }
