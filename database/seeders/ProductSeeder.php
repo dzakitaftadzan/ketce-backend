@@ -2,21 +2,36 @@
 
 namespace Database\Seeders;
 
-use App\Models\Product; // Pastikan menggunakan Model
+use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Database\Seeder;
 
 class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // Menggunakan updateOrCreate untuk mencegah duplikasi data
-        // jika seeder dijalankan berkali-kali.
+        $category = Category::firstOrCreate(
+            ['slug' => 'pakaian-pria'],
+            ['name' => 'Pakaian Pria']
+        );
+
         Product::updateOrCreate(
-            ['name' => 'Produk Tes'], // Kriteria unik
+            ['name' => 'Kemeja Flanel Ketce'],
             [
+                'category_id' => $category->id,
+                'price' => 150000,
+                'stock' => 50,
+                'description' => 'Kemeja flanel premium yang sangat ketce dan nyaman dipakai.'
+            ]
+        );
+        
+        Product::updateOrCreate(
+            ['name' => 'Kaos Polos Basic'],
+            [
+                'category_id' => $category->id,
                 'price' => 50000,
                 'stock' => 100,
-                // created_at dan updated_at otomatis diisi oleh Eloquent
+                'description' => 'Kaos polos untuk kebutuhan sehari-hari.'
             ]
         );
     }

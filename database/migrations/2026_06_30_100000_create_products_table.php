@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id(); // ID unik otomatis
+            $table->foreignId('category_id')->constrained()->cascadeOnDelete();
             $table->string('name'); // Kolom untuk nama produk
             $table->decimal('price', 10, 2); // Kolom harga (contoh: 10000.00)
             $table->integer('stock'); // Kolom jumlah stok
