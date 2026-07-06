@@ -17,7 +17,31 @@ use App\Http\Controllers\Courier\DeliveryController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+// Public endpoints for frontend catalog
+Route::get('/products', function (Illuminate\Http\Request $request) {
+    $query = \App\Models\Product::with('images')->latest();
+    if ($request->has('featured')) {
+        $query->limit($request->query('limit', 8));
+    }
+    return response()->json([
+        'success' => true,
+        'data' => $query->get()
+    ]);
+});
+
+Route::get('/categories', function () {
+    return response()->json([
+        'success' => true,
+        'data' => \App\Models\Category::all()
+    ]);
+});
+
+
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Illuminate\Http\Request $request) {
+        return $request->user();
+    });
+    Route::post('/logout', [AuthController::class, 'logout']);
 
     // ==========================
     // CUSTOMER
