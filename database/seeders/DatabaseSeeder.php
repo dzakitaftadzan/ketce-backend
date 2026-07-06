@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
     {
         // Panggil Seeder lain di sini
         $this->call([
+            CategorySeeder::class,
             ProductSeeder::class,
         ]);
 
@@ -22,6 +23,17 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Admin Ketce',
                 'password' => Hash::make('password'),
                 'role' => 'admin',
+                'is_active' => true,
+            ]
+        );
+        
+        // Buat Customer Dummy
+        User::updateOrCreate(
+            ['email' => 'customer@ketce.com'],
+            [
+                'name' => 'Customer Ketce',
+                'password' => Hash::make('password'),
+                'role' => 'customer',
                 'is_active' => true,
             ]
         );
