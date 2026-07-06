@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Order;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -15,25 +15,47 @@ class OrderService
     public function generateOrderCode(): string
     {
         $lastOrder = Order::latest()->first();
-        $number = $lastOrder ? (int) substr($lastOrder->order_code, 8) + 1 : 1;
+
+        $number = 1;
+
+        if ($lastOrder && $lastOrder->order_code) {
+            $number = (int) substr($lastOrder->order_code, 8) + 1;
+        }
+
         return 'KTC-ORD-' . str_pad($number, 5, '0', STR_PAD_LEFT);
     }
 
     public function createOrderFromCart(User $user, int $addressId, string $paymentProofPath): Order
     {
         return DB::transaction(function () use ($user, $addressId, $paymentProofPath) {
-            $cart = Cart::where('user_id', $user->id)->first();
-            if (!$cart) throw new Exception("Keranjang tidak ditemukan");
 
-            $cartItems = CartItem::where('cart_id', $cart->id)->with('product')->get();
-            if ($cartItems->isEmpty()) throw new Exception("Keranjang kosong");
+            $cart = Cart::where('user_id', $user->id)->first();
+
+            if (!$cart) {
+                throw new Exception('Keranjang tidak ditemukan');
+            }
+
+            $cartItems = CartItem::with('product')
+                ->where('cart_id', $cart->id)
+                ->get();
+
+            if ($cartItems->isEmpty()) {
+                throw new Exception('Keranjang kosong');
+            }
 
             $subtotal = 0;
+
             foreach ($cartItems as $item) {
+
+                if (!$item->product) {
+                    throw new Exception("Produk tidak ditemukan.");
+                }
+
                 if ($item->product->stock < $item->quantity) {
                     throw new Exception("Stok {$item->product->name} tidak cukup.");
                 }
-                $subtotal += ($item->product->price * $item->quantity);
+
+                $subtotal += $item->product->price * $item->quantity;
             }
 
             $order = Order::create([
@@ -45,24 +67,26 @@ class OrderService
                 'total_price' => $subtotal + 15000,
                 'payment_status' => 'pending',
                 'order_status' => 'pending',
-                'payment_proof' => $paymentProofPath
+                'payment_proof' => $paymentProofPath,
             ]);
 
             foreach ($cartItems as $item) {
+
                 OrderItem::create([
                     'order_id' => $order->id,
+                    'product_id' => $item->product->id,
                     'product_name' => $item->product->name,
                     'variant_info' => 'Default',
                     'quantity' => $item->quantity,
-                    'price' => $item->product->price
+                    'price' => $item->product->price,
                 ]);
-                
+
                 $item->product->decrement('stock', $item->quantity);
             }
 
             CartItem::where('cart_id', $cart->id)->delete();
             $cart->delete();
-            
+
             return $order;
         });
     }

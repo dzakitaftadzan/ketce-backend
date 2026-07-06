@@ -7,16 +7,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderItem extends Model
 {
-    // Pastikan 'order_id', 'product_id', 'quantity', 'price' sudah sesuai dengan kolom di database
     protected $fillable = [
-        'order_id', 
-        'product_id', 
-        'quantity', 
-        'price'
+        'order_id',
+        'product_id',
+        'product_name',
+        'variant_info',
+        'quantity',
+        'price',
     ];
 
     /**
-     * Relasi ke Order (Setiap item milik satu order)
+     * Relasi ke Order
      */
     public function order(): BelongsTo
     {
@@ -24,7 +25,7 @@ class OrderItem extends Model
     }
 
     /**
-     * Relasi ke Product (Opsional: jika ingin mengakses detail produk dari item)
+     * Relasi ke Product
      */
     public function product(): BelongsTo
     {

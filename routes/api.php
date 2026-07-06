@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+
+use App\Http\Controllers\Customer\AddressController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\OrderController as CustomerOrderController;
 use App\Http\Controllers\Customer\TrackingController;
@@ -22,6 +24,14 @@ Route::middleware('auth:sanctum')->group(function () {
     // ==========================
     Route::middleware('checkrole:customer,admin')->group(function () {
 
+        // Address
+        Route::prefix('addresses')->group(function () {
+            Route::get('/', [AddressController::class, 'index']);
+            Route::post('/', [AddressController::class, 'store']);
+            Route::delete('/{id}', [AddressController::class, 'destroy']);
+        });
+
+        // Cart
         Route::prefix('cart')->group(function () {
             Route::get('/', [CartController::class, 'index']);
             Route::post('/', [CartController::class, 'store']);
@@ -29,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::delete('/{id}', [CartController::class, 'destroy']);
         });
 
+        // Orders
         Route::prefix('orders')->group(function () {
             Route::post('/', [CustomerOrderController::class, 'store']);
             Route::get('/', [CustomerOrderController::class, 'index']);
