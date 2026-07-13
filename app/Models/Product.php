@@ -25,6 +25,11 @@ class Product extends Model
         'description',
     ];
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     protected $casts = [
         'price' => 'decimal:2',
         'stock' => 'integer',
