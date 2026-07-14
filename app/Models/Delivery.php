@@ -11,12 +11,18 @@ class Delivery extends Model
         'order_id', 
         'courier_id', 
         'status', 
-        'tracking_number'
+        'delivery_code',
     ];
 
     // Relasi balik ke Order
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    // Relasi ke Courier (User)
+    public function courier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'courier_id');
     }
 }

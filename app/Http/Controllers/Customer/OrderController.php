@@ -23,19 +23,33 @@ class OrderController extends Controller
     {
         $request->validate([
             'address_id' => 'required|exists:addresses,id',
-            'payment_proof' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'payment_method' => 'nullable|string|max:50',
+            'shipping_cost' => 'required|integer|min:0',
+            'direct_buy' => 'nullable|boolean',
+            'product_id' => 'required_if:direct_buy,true|exists:products,id',
+            'quantity' => 'required_if:direct_buy,true|integer|min:1',
+            'size' => 'nullable|string',
         ]);
 
         try {
-
-            $path = $request->file('payment_proof')
-                ->store('payment_proofs', 'public');
-
-            $order = $this->orderService->createOrderFromCart(
-                auth()->user(),
-                $request->address_id,
-                $path
-            );
+            if ($request->direct_buy) {
+                $order = $this->orderService->createDirectOrder(
+                    auth()->user(),
+                    $request->address_id,
+                    $request->payment_method,
+                    $request->product_id,
+                    $request->quantity,
+                    $request->size,
+                    $request->shipping_cost
+                );
+            } else {
+                $order = $this->orderService->createOrderFromCart(
+                    auth()->user(),
+                    $request->address_id,
+                    $request->payment_method,
+                    $request->shipping_cost
+                );
+            }
 
             return response()->json([
                 'success' => true,
@@ -58,6 +72,7 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::where('user_id', auth()->id())
+            ->with(['delivery', 'orderItems'])
             ->latest()
             ->get();
 
@@ -74,8 +89,11 @@ class OrderController extends Controller
     {
         $order = Order::where('order_code', $code)
             ->where('user_id', auth()->id())
-            ->with('orderItems')
+            ->with(['orderItems.product', 'delivery'])
             ->firstOrFail();
+
+        // [LOCAL DEV FIX] Auto-sync status dari Midtrans jika masih pending
+        $this->orderService->syncMidtransStatus($order);
 
         return response()->json([
             'success' => true,
@@ -88,24 +106,22 @@ class OrderController extends Controller
      */
     public function cancel($code)
     {
-        $order = Order::where('order_code', $code)
+        $order = Order::with('orderItems.product')
+            ->where('order_code', $code)
             ->where('user_id', auth()->id())
             ->firstOrFail();
 
-        if ($order->order_status != 'pending') {
+        try {
+            $this->orderService->cancelOrder($order);
+            return response()->json([
+                'success' => true,
+                'message' => 'Order berhasil dibatalkan dan stok dikembalikan.',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order tidak dapat dibatalkan.',
+                'message' => $e->getMessage(),
             ], 400);
         }
-
-        $order->update([
-            'order_status' => 'cancelled',
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Order berhasil dibatalkan.',
-        ]);
     }
 }

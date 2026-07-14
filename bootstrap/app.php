@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'checkrole' => \App\Http\Middleware\CheckRole::class,
         ]);
+
+        // Izinkan CORS dari Vite dev server (localhost:5173)
+        // dan dari production domain jika sudah deploy
+        $middleware->validateCsrfTokens(except: ['api/*']);
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Menangani error unauthenticated agar tidak redirect ke 'login'
